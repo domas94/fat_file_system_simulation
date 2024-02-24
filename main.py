@@ -275,7 +275,6 @@ def write_file(fh, buffer):
             break
         cluster_index += 1
 
-
 def close_file(fh):
     try:
         print_color_wrapper("File %s closed"%fh.name, colors.INFO_4)
@@ -285,6 +284,9 @@ def close_file(fh):
         traceback.print_exc()
         return False
 
+def delete_file(fh):
+    pass
+
 ############## APPLICATION START
 
 if __name__ == "__main__":
@@ -292,7 +294,7 @@ if __name__ == "__main__":
     disc = mount_disc()
     fh = open_file("t")
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
-        write_file(fh, "0123456789" * 21)
+        write_file(fh, fh.name * 210)
     close_file(fh)
     print_clusters(3)
     unmount_disc()
