@@ -1,6 +1,8 @@
 import traceback
 
-############## GLOBAL CONSTANTS ##############
+############## GLOBALS ##############
+
+############## CONSTANTS
 
 DISC_PATH = "disc"
 
@@ -9,6 +11,10 @@ NAME_CLUSTER = "xxx SIMPLE FAT FILE SYSTEM SIMULATION xxx size 3000 xx clusters 
 NAME_CLUSTER_START = 100
 TABLE_CLUSTER_START = 101
 ROOT_CLUSTER_START = 102
+
+############## VARIABLES
+
+temp_file_position = None
 
 ############## ERRORS
 
@@ -37,7 +43,7 @@ class FileHandle():
         self.position = position
         self.origin = origin
 
-############## FUNCTIONS
+############## FUNCTIONS ##############
         
 def print_color_wrapper(text: str, format: str):
     print(format + text + colors.END)
@@ -132,6 +138,7 @@ def file_table_write_new_file(byte_array, filename):
 
 def file_table_extend_file(byte_array, fh):
     retval = None
+    global temp_file_position
     try:
         if byte_array[199] != 0:
             retval = FILE_TABLE_FULL_ERROR
@@ -145,8 +152,8 @@ def file_table_extend_file(byte_array, fh):
                     raise MemoryError(colors.ERROR + "Disc full" + colors.END) 
                 if byte_array[index] == 0:
                     byte_array[index] = 255
-                    byte_array[fh.position] = index
-                    fh.position = index
+                    byte_array[temp_file_position] = index
+                    temp_file_position = index
                     retval = index
                     break
                 index += 1
@@ -248,8 +255,10 @@ def print_clusters(cluster_num):
         start_index += 100
     
 def write_file(fh, buffer):
+    global temp_file_position
     disc = read_disc()
     byte_array = bytearray(disc)
+    temp_file_position = fh.position
     cluster_index = (fh.position % 100) * 100
     starting_index = cluster_index
     while True:
@@ -270,6 +279,7 @@ def write_file(fh, buffer):
                         fh.size = fh.size + 1
                         byte_array[fh.origin + 2] = fh.size
                     else:
+                        # reset to starting position
                         return retval
                 byte_array[index] = ord(i)
                 cnt += 1
@@ -288,7 +298,24 @@ def close_file(fh):
         return False
 
 def delete_file(fh):
-    pass
+    disc = read_disc()
+    byte_array = bytearray(disc)
+    file_position = fh.position
+
+    # deleting data from the root cluster
+    byte_array[fh.origin] = 0
+    byte_array[fh.origin+1] = 0
+    byte_array[fh.origin+2] = 0
+
+    # deleting data from file clusters
+    for i in range (fh.size):
+        # deleting data from the file table cluster
+        byte_array[file_position] = 0
+        cluster_index = (file_position % 100) * 100
+        for i in range(100):
+            byte_array[cluster_index + i] = 0
+        file_position += 1
+    write_disc(bytes(byte_array))        
 
 ############## APPLICATION START ##############
 
@@ -299,5 +326,6 @@ if __name__ == "__main__":
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, fh.name * 210)
     close_file(fh)
+    delete_file(fh)
     print_clusters(3)
     unmount_disc()
