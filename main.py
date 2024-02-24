@@ -256,39 +256,42 @@ def print_clusters():
     
 def write_file(fh, buffer):
     global temp_file_position
-    disc = read_disc()
-    byte_array = bytearray(disc)
-    temp_file_position = fh.position
-    cluster_index = (fh.position % 100) * 100
-    starting_index = cluster_index
-    while True:
-        if byte_array[cluster_index] == 0:
-            cnt = 0
-            for i in buffer:
-                index = cluster_index + cnt
-                if index > starting_index + 99:
-                    retval = file_table_extend_file(byte_array, fh)
-                    if retval != DISC_FULL_ERROR and retval != FILE_TABLE_FULL_ERROR:
-                        # set new cluster starting indices
-                        cluster_index = (retval % 100) * 100
-                        starting_index = cluster_index
-                        cnt = 0
-                        index = cluster_index + cnt
+    try:
+        disc = read_disc()
+        byte_array = bytearray(disc)
+        temp_file_position = fh.position
+        cluster_index = (fh.position % 100) * 100
+        starting_index = cluster_index
+        while True:
+            if byte_array[cluster_index] == 0:
+                cnt = 0
+                for i in buffer:
+                    index = cluster_index + cnt
+                    if index > starting_index + 99:
+                        retval = file_table_extend_file(byte_array, fh)
+                        if retval != DISC_FULL_ERROR and retval != FILE_TABLE_FULL_ERROR:
+                            # set new cluster starting indices
+                            cluster_index = (retval % 100) * 100
+                            starting_index = cluster_index
+                            cnt = 0
+                            index = cluster_index + cnt
 
-                        # increment file size
-                        fh.size = fh.size + 1
-                        byte_array[fh.origin + 2] = fh.size
-                    else:
-                        # reset to starting position
-                        return retval
-                if index > 3000:
-                    raise MemoryError(colors.ERROR + "Disc full, Unable to write to file %s" % fh.name + colors.END) 
-                byte_array[index] = ord(i)
-                cnt += 1
-            print_color_wrapper("Buffer %s successfully written to file %s" % (buffer[:10], fh.name), colors.OK)
-            write_disc(bytes(byte_array))
-            break
-        cluster_index += 1
+                            # increment file size
+                            fh.size = fh.size + 1
+                            byte_array[fh.origin + 2] = fh.size
+                        else:
+                            # reset to starting position
+                            return retval
+                    if index > 3000:
+                        raise MemoryError(colors.ERROR + "Disc full, Unable to write to file %s" % fh.name + colors.END) 
+                    byte_array[index] = ord(i)
+                    cnt += 1
+                print_color_wrapper("Buffer %s successfully written to file %s" % (buffer[:10], fh.name), colors.OK)
+                write_disc(bytes(byte_array))
+                break
+            cluster_index += 1
+    except Exception:
+        traceback.print_exc()
 
 def close_file(fh):
     try:
