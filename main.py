@@ -150,7 +150,7 @@ def file_table_extend_file(byte_array, fh):
                     retval = index
                     break
                 index += 1
-            print_color_wrapper("Extending file to the file table index: " + str(index), colors.WARNING)
+            print_color_wrapper("Extending file %s to the file table index: " % fh.name + str(index), colors.WARNING)
             write_disc(bytes(byte_array))
         return retval
     except Exception:
