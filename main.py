@@ -11,6 +11,8 @@ NAME_CLUSTER = "xxx SIMPLE FAT FILE SYSTEM SIMULATION xxx size 3000 xx clusters 
 NAME_CLUSTER_START = 100
 TABLE_CLUSTER_START = 101
 ROOT_CLUSTER_START = 102
+MAX_DISC_SIZE = 3000
+CLUSTER_SIZE = 99
 
 ############## VARIABLES
 
@@ -271,7 +273,7 @@ def write_file(fh, buffer):
                 cnt = 0
                 for i in buffer:
                     index = cluster_index + cnt
-                    if index > first_cluster_index + 99:
+                    if index > first_cluster_index + CLUSTER_SIZE:
                         retval = file_table_extend_file(byte_array, fh)
                         if retval != DISC_FULL_ERROR and retval != FILE_TABLE_FULL_ERROR:
                             # calculate starting index
@@ -288,7 +290,7 @@ def write_file(fh, buffer):
                         else:
                             # reset to starting position
                             return retval
-                    if index > 3000:
+                    if index > MAX_DISC_SIZE:
                         write_disc(bytes(byte_array))
                         raise MemoryError(colors.ERROR + "Disc full, unable to write beyond index 3000 for file %s" % fh.name + colors.END)
                     byte_array[index] = ord(i)
