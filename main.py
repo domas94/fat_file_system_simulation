@@ -147,7 +147,7 @@ def file_table_extend_file(byte_array, fh):
         # If there is space in file table
         if retval == None:
             while True:
-                if index == 130:
+                if index == 131:
                     retval = DISC_FULL_ERROR
                     raise MemoryError(colors.ERROR + "Disc full" + colors.END) 
                 if byte_array[index] == 0:
@@ -235,7 +235,7 @@ def check_root_cluster_write_space(byte_array, index):
     else:
         return DISC_FULL_ERROR
 
-def print_clusters(cluster_num):
+def print_clusters():
 
     disc = read_disc()
     int_array = [int(byte) for byte in disc] 
@@ -243,14 +243,14 @@ def print_clusters(cluster_num):
     print_color_wrapper("########## FIRST CLUSTER ############", colors.INFO_1)
     print(disc[:start_index])
     print_color_wrapper("########## FILE TABLE CLUSTER #######", colors.INFO_1)
-    print(int_array[start_index:start_index+100])
+    print(int_array[start_index:start_index+30])
     start_index += 100
     print_color_wrapper("########## ROOT CLUSTER #############", colors.INFO_1)
     print(int_array[start_index:start_index+100])
     start_index += 100
 
-    for i in range(cluster_num):
-        print_color_wrapper("########## FILE CLUSTER %s ###########"%(i+1), colors.INFO_2)
+    for i in range(27):
+        print_color_wrapper("########## FILE CLUSTER %s ###########"%(i+4), colors.INFO_2)
         print(disc[start_index:start_index + 100])
         start_index += 100
     
@@ -281,6 +281,8 @@ def write_file(fh, buffer):
                     else:
                         # reset to starting position
                         return retval
+                if index > 3000:
+                    raise MemoryError(colors.ERROR + "Disc full, Unable to write to file %s" % fh.name + colors.END) 
                 byte_array[index] = ord(i)
                 cnt += 1
             print_color_wrapper("Buffer %s successfully written to file %s" % (buffer[:10], fh.name), colors.OK)
@@ -315,25 +317,25 @@ def delete_file(fh):
         for i in range(100):
             byte_array[cluster_index + i] = 0
         file_position += 1
-    write_disc(bytes(byte_array))        
+    write_disc(bytes(byte_array))    
+
+
+def open_write(data, len):
+    fh = open_file(data)
+    if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
+        write_file(fh, fh.name * len)
 
 ############## APPLICATION START ##############
 
 if __name__ == "__main__":
 
     disc = mount_disc()
-    fh_1 = open_file("a")
-    if fh_1 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
-        write_file(fh_1, fh_1.name * 210)
+    open_write("a", 410)
+    open_write("b", 510)
+    open_write("c", 310)
+    open_write("d", 310)
+    open_write("e", 310)
+    open_write("f", 410)
 
-    fh_2 = open_file("b")
-    if fh_2 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
-        write_file(fh_2, fh_2.name * 210)
-
-    fh_3 = open_file("c")
-    if fh_3 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
-        write_file(fh_3, fh_3.name * 210)
-    close_file(fh_2)
-    delete_file(fh_2)
-    print_clusters(10)
+    print_clusters()
     unmount_disc()
