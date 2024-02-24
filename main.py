@@ -255,22 +255,30 @@ def print_clusters(num = 27):
     
 def write_file(fh, buffer):
     try:
+        first_cluster_index = 0
+        first_cluster_flag = False
         disc = read_disc()
         byte_array = bytearray(disc)
         fh.active_cluster = fh.position
         cluster_index = (fh.position % 100) * 100
-        starting_index = cluster_index
         while True:
             if byte_array[cluster_index] == 0:
+                # set first cluster index to enable data append
+                if first_cluster_flag == False:
+                    first_cluster_flag = True
+                    first_cluster_index = cluster_index
+                    first_cluster_index = round(first_cluster_index / 100) * 100
                 cnt = 0
                 for i in buffer:
                     index = cluster_index + cnt
-                    if index > starting_index + 99:
+                    if index > first_cluster_index + 99:
                         retval = file_table_extend_file(byte_array, fh)
                         if retval != DISC_FULL_ERROR and retval != FILE_TABLE_FULL_ERROR:
-                            # set new cluster starting indices
+                            # calculate starting index
                             cluster_index = (retval % 100) * 100
-                            starting_index = cluster_index
+                            # set starting index for the new cluster
+                            first_cluster_index = cluster_index
+                            # counter reset
                             cnt = 0
                             index = cluster_index + cnt
 
@@ -282,7 +290,7 @@ def write_file(fh, buffer):
                             return retval
                     if index > 3000:
                         write_disc(bytes(byte_array))
-                        raise MemoryError(colors.ERROR + "Disc full, Unable to write beyond index 3000 for file %s" % fh.name + colors.END) 
+                        raise MemoryError(colors.ERROR + "Disc full, Unable to write beyond index 3000 for file %s" % fh.name + colors.END)
                     byte_array[index] = ord(i)
                     cnt += 1
                 print_color_wrapper("Buffer %s successfully written to file %s" % (buffer[:10], fh.name), colors.OK)
@@ -339,16 +347,16 @@ if __name__ == "__main__":
     if fh_1 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh_1, "z" * 50)
 
-    # fh_2 = open_write("b", 510)
-    # open_write("c", 310)
-    # fh_4 = open_write("d", 310)
-    # open_write("e", 310)
-    # open_write("f", 410)
+    fh_2 = open_write("b", 510)
+    open_write("c", 310)
+    fh_4 = open_write("d", 310)
+    open_write("e", 310)
+    open_write("f", 410)
 
-    # delete_file(fh_2)
-    # delete_file(fh_4)
+    delete_file(fh_2)
+    delete_file(fh_4)
 
-    # open_write("g", 10000)
+    open_write("g", 10000)
 
-    print_clusters(3)
+    print_clusters()
     unmount_disc()
