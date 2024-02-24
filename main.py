@@ -1,6 +1,6 @@
 import traceback
 
-############## GLOBAL CONSTANTS
+############## GLOBAL CONSTANTS ##############
 
 DISC_PATH = "disc"
 
@@ -10,10 +10,12 @@ NAME_CLUSTER_START = 100
 TABLE_CLUSTER_START = 101
 ROOT_CLUSTER_START = 102
 
+############## ERRORS
+
 DISC_FULL_ERROR = -1
 FILE_TABLE_FULL_ERROR = -2
 
-############## CLASSES
+############## CLASSES ##############
 
 class colors:
     WARNING = '\033[95m'
@@ -37,7 +39,7 @@ class FileHandle():
 
 ############## FUNCTIONS
         
-def print_color_wrapper(text, format):
+def print_color_wrapper(text: str, format: str):
     print(format + text + colors.END)
 
 def write_disc(disc:bytes):
@@ -287,7 +289,7 @@ def close_file(fh):
 def delete_file(fh):
     pass
 
-############## APPLICATION START
+############## APPLICATION START ##############
 
 if __name__ == "__main__":
 
