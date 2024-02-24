@@ -10,7 +10,6 @@ NAME_CLUSTER_START = 100
 TABLE_CLUSTER_START = 101
 ROOT_CLUSTER_START = 102
 
-
 DISC_FULL_ERROR = -1
 FILE_TABLE_FULL_ERROR = -2
 
@@ -129,7 +128,7 @@ def file_table_write_new_file(byte_array):
         write_disc(bytes(byte_array))
     return retval
 
-def file_table_extend_file(byte_array, previous_index):
+def file_table_extend_file(byte_array, fh):
     retval = None
     try:
         if byte_array[199] != 0:
@@ -144,7 +143,8 @@ def file_table_extend_file(byte_array, previous_index):
                     raise MemoryError(colors.ERROR + "Disc full" + colors.END) 
                 if byte_array[index] == 0:
                     byte_array[index] = 255
-                    byte_array[previous_index] = index
+                    byte_array[fh.position] = index
+                    fh.position = index
                     retval = index
                     break
                 index += 1
@@ -256,7 +256,7 @@ def write_file(fh, buffer):
             for i in buffer:
                 index = cluster_index + cnt
                 if index > starting_index + 99:
-                    retval = file_table_extend_file(byte_array, fh.position)
+                    retval = file_table_extend_file(byte_array, fh)
                     if retval != DISC_FULL_ERROR and retval != FILE_TABLE_FULL_ERROR:
                         # set new cluster starting indices
                         cluster_index = (retval % 100) * 100
@@ -285,8 +285,6 @@ def close_file(fh):
         traceback.print_exc()
         return False
 
-
-
 ############## APPLICATION START
 
 if __name__ == "__main__":
@@ -296,5 +294,5 @@ if __name__ == "__main__":
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, "0123456789" * 21)
     close_file(fh)
-    print_clusters(2)
+    print_clusters(3)
     unmount_disc()
