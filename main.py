@@ -30,17 +30,17 @@ class colors:
 
 
 class FileHandle():
-    def __init__(self, filename = None, file_size = None, file_position = None):
-        self.filename = filename
-        self.file_size = file_size
-        self.file_position = file_position
+    def __init__(self, name = None, size = None, position = None):
+        self.name = name
+        self.size = size
+        self.position = position
 
 ############## FUNCTIONS
         
 def print_color_wrapper(text, format):
     print(format + text + colors.END)
 
-def disc_write(disc:bytes):
+def write_disc(disc:bytes):
     with open(DISC_PATH, 'wb') as f:
         f.write(disc)
 
@@ -48,7 +48,7 @@ def read_disc():
     with open(DISC_PATH, "rb") as f:
         return f.read()
 
-def create_disc_with_size(size_in_bytes):
+def create_disc_with_size(size_in_bytes: int):
     with open(DISC_PATH, 'wb') as f:
         f.write(b'\0' * size_in_bytes)
 
@@ -64,7 +64,7 @@ def format_disc():
     byte_array[TABLE_CLUSTER_START] = 255
     # set cluster 2 as not free
     byte_array[ROOT_CLUSTER_START] = 255
-    disc_write(bytes(byte_array))
+    write_disc(bytes(byte_array))
     return byte_array
 
 def mount_disc():
@@ -83,7 +83,7 @@ def mount_disc():
 def unmount_disc():
     try:
         disc = read_disc()
-        disc_write(disc)
+        write_disc(disc)
         del disc
         print_color_wrapper("Disc successfully unmounted", colors.OK)
         return True
@@ -125,29 +125,29 @@ def file_table_write_new_file(byte_array):
                 break
             index += 1
         print_color_wrapper("Writing new file to the file table index: " + str(index), colors.OK)
-        disc_write(bytes(byte_array))
+        write_disc(bytes(byte_array))
     return retval
 
 def root_cluster_write_new_file(filename, byte_array, root_index, file_cluster):
     try:
-        print_color_wrapper("Writing new file to the root cluster: " + str(root_index), colors.OK)
+        print_color_wrapper("Writing new file to the root cluster index: " + str(root_index), colors.OK)
         fh = FileHandle()
 
         # set filename
         byte_array[root_index] = ord(filename)
-        fh.filename = filename
+        fh.name = filename
 
         # set position
         root_index += 1
         byte_array[root_index] = file_cluster
-        fh.file_position = byte_array[root_index]
+        fh.position = byte_array[root_index]
 
         # set size
         root_index += 1
         byte_array[root_index] = 1
-        fh.file_size = 1
+        fh.size = 1
 
-        disc_write(bytes(byte_array))
+        write_disc(bytes(byte_array))
         return fh
     except Exception:
         traceback.print_exc()
@@ -159,7 +159,7 @@ def set_file_handle(byte_array, filename):
     try:
         root_index = find_root_cluster(byte_array, ROOT_CLUSTER_START)
         root_index = (root_index % 100) * 100
-        print_color_wrapper("Root cluster index is: " + str(root_index),colors.INFO_3)
+        print_color_wrapper("Root cluster start index is: " + str(root_index),colors.INFO_3)
         root_cluster_end = root_index + 99
         if check_root_cluster_write_space(byte_array, root_cluster_end):
             while(True):
@@ -212,6 +212,16 @@ def print_clusters(disc, clusters):
         print_color_wrapper("########## FILE CLUSTER %s ###########"%(i+1), colors.INFO_2)
         print(disc[start_index:start_index + 100])
         start_index += 100
+    
+def write_file(fh, buffer):
+    disc = read_disc()
+    byte_array = bytearray(disc)
+    cluster_index = (fh.position % 100) * 100
+    cnt = 0
+    for i in buffer:
+        byte_array[cluster_index + cnt] = ord(i)
+        cnt += 1
+    write_disc(bytes(byte_array))
 
 ############## APPLICATION START
 
@@ -219,6 +229,7 @@ if __name__ == "__main__":
 
     disc = mount_disc()
     fh = open_file("f")
+    write_file(fh, "bananko banana")
     disc = read_disc()
     print_clusters(disc, 1)
-    unmount_disc()
+    #unmount_disc()
