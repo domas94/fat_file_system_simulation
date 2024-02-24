@@ -325,25 +325,28 @@ def close_file(fh):
         traceback.print_exc()
         return False
 
-def delete_file(fh):
-    disc = read_disc()
-    byte_array = bytearray(disc)
-    file_position = fh.position
+def delete_file(fh: FileHandle, filename: str):
+    if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
+        disc = read_disc()
+        byte_array = bytearray(disc)
+        file_position = fh.position
 
-    # deleting data from the root cluster
-    byte_array[fh.origin] = 0
-    byte_array[fh.origin+1] = 0
-    byte_array[fh.origin+2] = 0
+        # deleting data from the root cluster
+        byte_array[fh.origin] = 0
+        byte_array[fh.origin+1] = 0
+        byte_array[fh.origin+2] = 0
 
-    # deleting data from file clusters
-    for i in range (fh.size):
-        # deleting data from the file table cluster
-        byte_array[file_position] = 0
-        cluster_index = (file_position % 100) * 100
-        for i in range(100):
-            byte_array[cluster_index + i] = 0
-        file_position += 1
-    write_disc(bytes(byte_array))    
+        # deleting data from file clusters
+        for i in range (fh.size):
+            # deleting data from the file table cluster
+            byte_array[file_position] = 0
+            cluster_index = (file_position % 100) * 100
+            for i in range(100):
+                byte_array[cluster_index + i] = 0
+            file_position += 1
+        write_disc(bytes(byte_array))
+    else:
+        print_color_wrapper("Unable to delete file %s, file handle invalid" % filename, colors.ERROR_RED)
 
 def open_write_file(data, len):
     fh = open_file(data)
@@ -355,7 +358,7 @@ def delete_disc():
     os.remove("disc")
     print_color_wrapper("Disc simulation file deleted !", colors.BOLD + colors.OK_GREEN)
 
-def append_file_data(fh, data, len):
+def append_file(fh, data, len):
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, data * len)
 
@@ -375,11 +378,11 @@ if __name__ == "__main__":
     open_write_file("f", 410)
 
     # Append data
-    append_file_data(fh_1, "z", 50)
+    append_file(fh_1, "z", 50)
 
     # Delete data
-    delete_file(fh_2)
-    delete_file(fh_4)
+    delete_file(fh_2, "b")
+    delete_file(fh_4, "d")
 
     # Deplete empty disc space
     open_write_file("g", 10000)
@@ -389,4 +392,4 @@ if __name__ == "__main__":
     # Saves current disc data and remove reference for disc object
     unmount_disc()
     # Delete disc file
-    delete_disc()
+    # delete_disc()
