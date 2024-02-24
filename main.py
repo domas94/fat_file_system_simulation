@@ -1,5 +1,7 @@
 import traceback
 
+############## GLOBAL CONSTANTS
+
 DISC_PATH = "disc"
 
 NAME_CLUSTER = "xxx SIMPLE FAT FILE SYSTEM SIMULATION xxx size 3000 xx clusters 30 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
@@ -11,6 +13,8 @@ ROOT_CLUSTER_START = 102
 
 DISC_FULL_ERROR = -1
 FILE_TABLE_FULL_ERROR = -2
+
+############## CLASSES
 
 class colors:
     PURPLE = '\033[95m'
@@ -25,14 +29,16 @@ class colors:
     END = '\033[0m'
 
 
-def print_color_wrapper(text, format):
-    print(format + text + colors.END)
-
 class FileHandle():
     def __init__(self, filename = None, file_size = None, file_position = None):
         self.filename = filename
         self.file_size = file_size
         self.file_position = file_position
+
+############## FUNCTIONS
+        
+def print_color_wrapper(text, format):
+    print(format + text + colors.END)
 
 def disc_write(disc:bytes):
     with open(DISC_PATH, 'wb') as f:
@@ -207,8 +213,12 @@ def print_clusters(disc, clusters):
         print(disc[start_index:start_index + 100])
         start_index += 100
 
-disc = mount_disc()
-fh = open_file("f")
-disc = read_disc()
-print_clusters(disc, 1)
-#nmount_disc()
+############## APPLICATION START
+
+if __name__ == "__main__":
+
+    disc = mount_disc()
+    fh = open_file("f")
+    disc = read_disc()
+    print_clusters(disc, 1)
+    unmount_disc()
