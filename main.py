@@ -14,8 +14,6 @@ ROOT_CLUSTER_START = 102
 
 ############## VARIABLES
 
-temp_file_position = None
-
 ############## ERRORS
 
 DISC_FULL_ERROR = -1
@@ -37,11 +35,12 @@ class colors:
 
 
 class FileHandle():
-    def __init__(self, name = None, size = None, position = None, origin = None):
+    def __init__(self, name = None, size = None, position = None, origin = None, active_cluster = None):
         self.name = name
         self.size = size
         self.position = position
         self.origin = origin
+        self.active_cluster = active_cluster
 
 ############## FUNCTIONS ##############
         
@@ -138,7 +137,6 @@ def file_table_write_new_file(byte_array, filename):
 
 def file_table_extend_file(byte_array, fh):
     retval = None
-    global temp_file_position
     try:
         if byte_array[199] != 0:
             retval = FILE_TABLE_FULL_ERROR
@@ -153,8 +151,8 @@ def file_table_extend_file(byte_array, fh):
                     raise MemoryError(colors.ERROR + "Disc full unable to write to cluster 31 for file %s" % fh.name + colors.END) 
                 if byte_array[index] == 0:
                     byte_array[index] = 255
-                    byte_array[temp_file_position] = index
-                    temp_file_position = index
+                    byte_array[fh.active_cluster] = index
+                    fh.active_cluster = index
                     retval = index
                     break
                 index += 1
@@ -256,11 +254,10 @@ def print_clusters(num = 27):
         start_index += 100
     
 def write_file(fh, buffer):
-    global temp_file_position
     try:
         disc = read_disc()
         byte_array = bytearray(disc)
-        temp_file_position = fh.position
+        fh.active_cluster = fh.position
         cluster_index = (fh.position % 100) * 100
         starting_index = cluster_index
         while True:
