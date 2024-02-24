@@ -322,10 +322,18 @@ def delete_file(fh):
 if __name__ == "__main__":
 
     disc = mount_disc()
-    fh = open_file("t")
-    if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
-        write_file(fh, fh.name * 210)
-    close_file(fh)
-    delete_file(fh)
-    print_clusters(3)
+    fh_1 = open_file("a")
+    if fh_1 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
+        write_file(fh_1, fh_1.name * 210)
+
+    fh_2 = open_file("b")
+    if fh_2 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
+        write_file(fh_2, fh_2.name * 210)
+
+    fh_3 = open_file("c")
+    if fh_3 != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
+        write_file(fh_3, fh_3.name * 210)
+    close_file(fh_2)
+    delete_file(fh_2)
+    print_clusters(10)
     unmount_disc()
