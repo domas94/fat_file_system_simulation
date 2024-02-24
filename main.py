@@ -205,9 +205,9 @@ def set_file_handle(byte_array, filename):
                 if byte_array[root_index] == 0:
                     retval = file_table_write_new_file(byte_array, filename)
                     if retval == FILE_TABLE_FULL_ERROR: 
-                        raise MemoryError(colors.ERROR + "File table full" + colors.END) 
+                        raise MemoryError(colors.ERROR + "File table full, unable to open file %s" % filename + colors.END) 
                     elif retval == DISC_FULL_ERROR: 
-                        raise MemoryError(colors.ERROR + "Disc full" + colors.END)
+                        raise MemoryError(colors.ERROR + "Disc full, unable to open file %s" % filename + colors.END)
                     elif retval != None:
                         file_table_cluster = retval
                     retval = root_cluster_write_new_file(filename, byte_array, root_index, file_table_cluster)
@@ -290,7 +290,7 @@ def write_file(fh, buffer):
                             return retval
                     if index > 3000:
                         write_disc(bytes(byte_array))
-                        raise MemoryError(colors.ERROR + "Disc full, Unable to write beyond index 3000 for file %s" % fh.name + colors.END)
+                        raise MemoryError(colors.ERROR + "Disc full, unable to write beyond index 3000 for file %s" % fh.name + colors.END)
                     byte_array[index] = ord(i)
                     cnt += 1
                 print_color_wrapper("Buffer %s successfully written to file %s" % (buffer[:10], fh.name), colors.OK)
