@@ -110,7 +110,7 @@ def open_file(filename: str):
         traceback.print_exc()
         return fh
 
-def file_table_write_new_file(byte_array):
+def file_table_write_new_file(byte_array, filename):
     retval = None
     if byte_array[199] != 0:
         retval = FILE_TABLE_FULL_ERROR
@@ -126,7 +126,7 @@ def file_table_write_new_file(byte_array):
                 retval = index
                 break
             index += 1
-        print_color_wrapper("Writing new file to the file table index: " + str(index), colors.OK)
+        print_color_wrapper("Writing new file %s to the file table index: " % filename + str(index), colors.OK)
         write_disc(bytes(byte_array))
     return retval
 
@@ -159,7 +159,7 @@ def file_table_extend_file(byte_array, fh):
 
 def root_cluster_write_new_file(filename, byte_array, root_index, file_cluster):
     try:
-        print_color_wrapper("Writing new file to the root cluster index: " + str(root_index), colors.OK)
+        print_color_wrapper("Writing new file %s to the root cluster index: " % filename + str(root_index), colors.OK)
         fh = FileHandle()
 
         # set origin
@@ -197,7 +197,7 @@ def set_file_handle(byte_array, filename):
             while(True):
                 # if root cluster index is empty start writing
                 if byte_array[root_index] == 0:
-                    retval = file_table_write_new_file(byte_array)
+                    retval = file_table_write_new_file(byte_array, filename)
                     if retval == FILE_TABLE_FULL_ERROR: 
                         raise MemoryError(colors.ERROR + "File table full" + colors.END) 
                     elif retval == DISC_FULL_ERROR: 
@@ -273,6 +273,7 @@ def write_file(fh, buffer):
                         return retval
                 byte_array[index] = ord(i)
                 cnt += 1
+            print_color_wrapper("Buffer %s successfully written to file %s" % (buffer[:10], fh.name), colors.OK)
             write_disc(bytes(byte_array))
             break
         cluster_index += 1
