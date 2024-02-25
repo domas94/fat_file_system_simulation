@@ -40,7 +40,7 @@ class colors:
 
 
 class FileHandle():
-    def __init__(self, name = None, size = None, position = None, origin = None, active_cluster = None):
+    def __init__(self, name: str = None, size: int = None, position: int = None, origin: int = None, active_cluster: int = None):
         self.name = name
         self.size = size
         self.position = position
@@ -49,37 +49,37 @@ class FileHandle():
 
 ############## FUNCTIONS ##############
         
-def print_color_wrapper(text: str, format: str):
+def print_color_wrapper(text: str, format: str) -> None:
     print(format + text + colors.END)
 
-def write_disc(disc:bytes):
+def write_disc(disc:bytes) -> None:
     with open(DISC_PATH, 'wb') as f:
         f.write(disc)
 
-def read_disc():
+def read_disc() -> None:
     with open(DISC_PATH, "rb") as f:
         return f.read()
 
-def create_disc_with_size(size_in_bytes: int):
+def create_disc_with_size(size_in_bytes: int) -> None:
     with open(DISC_PATH, 'wb') as f:
         f.write(b'\0' * size_in_bytes)
 
-def format_disc():
+def format_disc() -> bytearray:
     disc = read_disc()
     byte_array = bytearray(disc)
     for i, char in enumerate(NAME_CLUSTER):
         byte_array[i] = ord(char)
     
-    # set cluster 0 as not free
+    # Set cluster 0 as occupied
     byte_array[NAME_CLUSTER_START] = 255
-    # set cluster 1 as not free
+    # Set cluster 1 as occupied
     byte_array[TABLE_CLUSTER_START] = 255
-    # set cluster 2 as not free
+    # Set cluster 2 as occupied
     byte_array[ROOT_CLUSTER_START] = 255
     write_disc(bytes(byte_array))
     return byte_array
 
-def mount_disc():
+def mount_disc() -> bytearray:
     try:
         disc = read_disc()
         return disc
@@ -92,26 +92,28 @@ def mount_disc():
         byte_array = format_disc()
         return bytes(byte_array)
 
-def unmount_disc():
+def unmount_disc() -> bool:
     try:
         disc = read_disc()
         write_disc(disc)
-        # Print disc memory address
+        # disc object memory address
         # print(id(disc))
-        # Print disc reference count
+        # disc object reference count
         # print(sys.getrefcount(disc))
         del disc
-        # This will now give UnboundLocalError since disc reference is deleted
-        # When reference count drops to 0, Python's garbage collector will delete the object from memory
-        # id(disc)
-        # sys.getrefcount(disc)
-        print_color_wrapper("Disc unmounted", colors.OK_GREEN)
+        print_color_wrapper("Removed disc object reference", colors.BOLD + colors.INFO_PURPLE)
+
+        """ 
+        id and getrefcount will now return UnboundLocalError since its name reference is deleted
+        id(disc), sys.getrefcount(disc)
+        When reference count drops to 0, Python's garbage collector will delete the object from the memory
+        """
         return True
     except Exception:
         traceback.print_exc()
         return False
 
-def open_file(filename: str):
+def open_file(filename: str) -> FileHandle:
     fh = None
     try:
         if len(filename) == 1:
@@ -128,7 +130,7 @@ def open_file(filename: str):
         traceback.print_exc()
         return fh
 
-def file_table_write_new_file(byte_array, filename):
+def file_table_write_new_file(byte_array: bytearray, filename: str) -> int:
     retval = None
     if byte_array[199] != 0:
         retval = FILE_TABLE_FULL_ERROR
@@ -148,7 +150,7 @@ def file_table_write_new_file(byte_array, filename):
         write_disc(bytes(byte_array))
     return retval
 
-def file_table_extend_file(byte_array, fh):
+def file_table_extend_file(byte_array: bytearray, fh: FileHandle) -> int:
     retval = None
     try:
         if byte_array[199] != 0:
@@ -176,24 +178,24 @@ def file_table_extend_file(byte_array, fh):
         traceback.print_exc()
         return retval
 
-def root_cluster_write_new_file(filename, byte_array, root_index, file_cluster):
+def root_cluster_write_new_file(filename: str, byte_array: bytearray, root_index: int, file_cluster: int) -> FileHandle:
     try:
         print_color_wrapper("Writing new file %s to the root cluster index: " % filename + str(root_index), colors.OK_GREEN)
         fh = FileHandle()
 
-        # set origin
+        # Set file handle origin position
         fh.origin = root_index
 
-        # set filename
+        # Set file name
         byte_array[root_index] = ord(filename)
         fh.name = filename
 
-        # set position
+        # Set last file position
         root_index += 1
         byte_array[root_index] = file_cluster
         fh.position = byte_array[root_index]
 
-        # set size
+        # Set file cluster size
         root_index += 1
         byte_array[root_index] = 1
         fh.size = 1
@@ -204,8 +206,7 @@ def root_cluster_write_new_file(filename, byte_array, root_index, file_cluster):
         traceback.print_exc()
         return None
     
-def set_file_handle(byte_array, filename):
-    # start of root cluster
+def set_file_handle(byte_array: bytearray, filename: str) -> FileHandle:
     retval = None
     try:
         root_index = find_root_cluster(byte_array, ROOT_CLUSTER_START)
@@ -229,26 +230,26 @@ def set_file_handle(byte_array, filename):
                     root_index += 1
         else:
             retval = DISC_FULL_ERROR
+            raise MemoryError(colors.ERROR_RED + "Disc full, unable to open root cluster for file %s" % filename + colors.END) 
         return retval
     except Exception:
         traceback.print_exc()
         return retval
 
-def find_root_cluster(byte_array, index):
+def find_root_cluster(byte_array: bytearray, index: int) -> int:
     if byte_array[index] == 255:
         return index
     else:
         index = find_root_cluster(byte_array, index)
         return index
 
-def check_root_cluster_write_space(byte_array, index):
+def check_root_cluster_write_space(byte_array: bytearray, index: int) -> bool:
     if byte_array[index] == 0 and byte_array[index-1] and byte_array[index-2]:
         return True
     else:
-        return DISC_FULL_ERROR
+        return False
 
-def print_clusters(num = 27):
-
+def print_clusters(num: int = 27) -> None:
     disc = read_disc()
     int_array = [int(byte) for byte in disc] 
     start_index = 100
@@ -269,7 +270,7 @@ def print_clusters(num = 27):
     print_color_wrapper("\n#####################################", colors.INFO_DARK_CYAN)
     print()
     
-def write_file(fh, buffer):
+def write_file(fh: FileHandle, buffer: str) -> None:
     try:
         first_cluster_index = 0
         first_cluster_flag = False
@@ -316,7 +317,7 @@ def write_file(fh, buffer):
     except Exception:
         traceback.print_exc()
 
-def close_file(fh):
+def close_file(fh: FileHandle) -> bool:
     try:
         print_color_wrapper("File %s closed"%fh.name, colors.INFO_CYAN)
         del fh
@@ -325,20 +326,20 @@ def close_file(fh):
         traceback.print_exc()
         return False
 
-def delete_file(fh: FileHandle, filename: str):
+def delete_file(fh: FileHandle, filename: str) -> None:
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         disc = read_disc()
         byte_array = bytearray(disc)
         file_position = fh.position
 
-        # deleting data from the root cluster
+        # Deleting data from the root cluster
         byte_array[fh.origin] = 0
         byte_array[fh.origin+1] = 0
         byte_array[fh.origin+2] = 0
 
-        # deleting data from file clusters
+        # Deleting data from file clusters
         for i in range (fh.size):
-            # deleting data from the file table cluster
+            # Deleting data from the file table cluster
             byte_array[file_position] = 0
             cluster_index = (file_position % 100) * 100
             for i in range(100):
@@ -348,17 +349,17 @@ def delete_file(fh: FileHandle, filename: str):
     else:
         print_color_wrapper("Unable to delete file %s, file handle invalid" % filename, colors.ERROR_RED)
 
-def open_write_file(data, len):
+def open_write_file(data: str, len: int) -> FileHandle:
     fh = open_file(data)
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, fh.name * len)
     return fh
 
-def delete_disc():
+def delete_disc() -> None:
     os.remove("disc")
-    print_color_wrapper("Disc simulation file deleted !", colors.BOLD + colors.OK_GREEN)
+    print_color_wrapper("Disc simulation file deleted", colors.BOLD + colors.INFO_PURPLE)
 
-def append_file(fh, data, len):
+def append_file(fh: FileHandle, data: str, len: int) -> None:
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, data * len)
 
@@ -392,4 +393,4 @@ if __name__ == "__main__":
     # Saves current disc data and remove reference for disc object
     unmount_disc()
     # Delete disc file
-    # delete_disc()
+    delete_disc()
