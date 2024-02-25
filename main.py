@@ -50,7 +50,10 @@ class FileHandle():
 
 ############## FUNCTIONS ##############
 
-""" Wrapper for print function. Used for colored print outputs. """
+""" brief: Wrapper for print function. Used for colored text outputs. 
+    param: text - string to be printed
+    param: format - format and color specifier
+    return: None """
 def print_color_wrapper(text: str, format: str) -> None:
     print(format + text + colors.END)
 
@@ -407,12 +410,14 @@ if __name__ == "__main__":
     delete_file(fh_2, "b")
     delete_file(fh_4, "d")
 
-    # Deplete empty disc space
+    # Deplete remaining empty disc space
     open_write_file("g", 10000)
 
+    # Print all cluster data
     print_clusters()
 
     # Saves current disc data and remove reference for disc object
     unmount_disc()
+
     # Delete disc file
     delete_disc()
