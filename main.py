@@ -25,6 +25,7 @@ FILE_TABLE_FULL_ERROR = -2
 
 ############## CLASSES ##############
 
+""" Escape codes for colored print logs. """
 class colors:
     INFO_PURPLE = '\033[95m'
     INFO_CYAN = '\033[96m'
@@ -38,7 +39,7 @@ class colors:
     UNDERLINE = '\033[4m'
     END = '\033[0m'
 
-
+""" Used for manipulation with files. """
 class FileHandle():
     def __init__(self, name: str = None, size: int = None, position: int = None, origin: int = None, active_cluster: int = None):
         self.name = name
@@ -48,22 +49,27 @@ class FileHandle():
         self.active_cluster = active_cluster
 
 ############## FUNCTIONS ##############
-        
+
+""" Wrapper for print function. Used for colored print outputs. """
 def print_color_wrapper(text: str, format: str) -> None:
     print(format + text + colors.END)
 
+""" Writes new data to the disc file. """
 def write_disc(disc:bytes) -> None:
     with open(DISC_PATH, 'wb') as f:
         f.write(disc)
 
+""" Reads disc data. """
 def read_disc() -> None:
     with open(DISC_PATH, "rb") as f:
         return f.read()
 
+""" Creates new disc with specified size. """
 def create_disc_with_size(size_in_bytes: int) -> None:
     with open(DISC_PATH, 'wb') as f:
         f.write(b'\0' * size_in_bytes)
 
+""" Formats clean disc data. """
 def format_disc() -> bytearray:
     disc = read_disc()
     byte_array = bytearray(disc)
@@ -79,7 +85,8 @@ def format_disc() -> bytearray:
     write_disc(bytes(byte_array))
     return byte_array
 
-def mount_disc() -> bytearray:
+""" Returns disc data as bytes. """
+def mount_disc() -> bytes:
     try:
         disc = read_disc()
         return disc
@@ -92,6 +99,7 @@ def mount_disc() -> bytearray:
         byte_array = format_disc()
         return bytes(byte_array)
 
+""" Removed name reference from memory. """
 def unmount_disc() -> bool:
     try:
         disc = read_disc()
@@ -113,6 +121,7 @@ def unmount_disc() -> bool:
         traceback.print_exc()
         return False
 
+""" Creates new file. """
 def open_file(filename: str) -> FileHandle:
     fh = None
     try:
@@ -130,6 +139,7 @@ def open_file(filename: str) -> FileHandle:
         traceback.print_exc()
         return fh
 
+""" Writes new file data to the file table. """
 def file_table_write_new_file(byte_array: bytearray, filename: str) -> int:
     retval = None
     if byte_array[199] != 0:
@@ -150,6 +160,7 @@ def file_table_write_new_file(byte_array: bytearray, filename: str) -> int:
         write_disc(bytes(byte_array))
     return retval
 
+""" Extends file to the next available cluster. """
 def file_table_extend_file(byte_array: bytearray, fh: FileHandle) -> int:
     retval = None
     try:
@@ -178,6 +189,7 @@ def file_table_extend_file(byte_array: bytearray, fh: FileHandle) -> int:
         traceback.print_exc()
         return retval
 
+""" Writes new file data to the root cluster. """
 def root_cluster_write_new_file(filename: str, byte_array: bytearray, root_index: int, file_cluster: int) -> FileHandle:
     try:
         print_color_wrapper("Writing new file %s to the root cluster index: " % filename + str(root_index), colors.OK_GREEN)
@@ -205,7 +217,8 @@ def root_cluster_write_new_file(filename: str, byte_array: bytearray, root_index
     except Exception:
         traceback.print_exc()
         return None
-    
+
+""" Returns file handle for a new file. """
 def set_file_handle(byte_array: bytearray, filename: str) -> FileHandle:
     retval = None
     try:
@@ -236,6 +249,7 @@ def set_file_handle(byte_array: bytearray, filename: str) -> FileHandle:
         traceback.print_exc()
         return retval
 
+""" Find active root cluster. """
 def find_root_cluster(byte_array: bytearray, index: int) -> int:
     if byte_array[index] == 255:
         return index
@@ -243,12 +257,14 @@ def find_root_cluster(byte_array: bytearray, index: int) -> int:
         index = find_root_cluster(byte_array, index)
         return index
 
+""" Check if root cluster has enough data for new file write. """
 def check_root_cluster_write_space(byte_array: bytearray, index: int) -> bool:
     if byte_array[index] == 0 and byte_array[index-1] and byte_array[index-2]:
         return True
     else:
         return False
 
+""" Prints cluster content. """
 def print_clusters(num: int = 27) -> None:
     disc = read_disc()
     int_array = [int(byte) for byte in disc] 
@@ -269,7 +285,8 @@ def print_clusters(num: int = 27) -> None:
         start_index += 100
     print_color_wrapper("\n#####################################", colors.INFO_DARK_CYAN)
     print()
-    
+
+""" Write data to file. """
 def write_file(fh: FileHandle, buffer: str) -> None:
     try:
         first_cluster_index = 0
@@ -317,6 +334,7 @@ def write_file(fh: FileHandle, buffer: str) -> None:
     except Exception:
         traceback.print_exc()
 
+""" Close file. """
 def close_file(fh: FileHandle) -> bool:
     try:
         print_color_wrapper("File %s closed"%fh.name, colors.INFO_CYAN)
@@ -326,6 +344,7 @@ def close_file(fh: FileHandle) -> bool:
         traceback.print_exc()
         return False
 
+""" Deletes file. """
 def delete_file(fh: FileHandle, filename: str) -> None:
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         disc = read_disc()
@@ -349,16 +368,19 @@ def delete_file(fh: FileHandle, filename: str) -> None:
     else:
         print_color_wrapper("Unable to delete file %s, file handle invalid" % filename, colors.ERROR_RED)
 
+""" Wrapper function for opening and writing to a file. """
 def open_write_file(data: str, len: int) -> FileHandle:
     fh = open_file(data)
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, fh.name * len)
     return fh
 
+""" Deletes disc file. """
 def delete_disc() -> None:
     os.remove("disc")
     print_color_wrapper("Disc simulation file deleted", colors.BOLD + colors.INFO_PURPLE)
 
+""" Appends data to already opened file. """
 def append_file(fh: FileHandle, data: str, len: int) -> None:
     if fh != DISC_FULL_ERROR and FILE_TABLE_FULL_ERROR:
         write_file(fh, data * len)
