@@ -259,7 +259,7 @@ def find_root_cluster(byte_array: bytearray, index: int) -> int:
 
 """ Check if root cluster has enough data for new file write. """
 def check_root_cluster_write_space(byte_array: bytearray, index: int) -> bool:
-    if byte_array[index] == 0 and byte_array[index-1] and byte_array[index-2]:
+    if byte_array[index] == 0 and byte_array[index-1] == 0 and byte_array[index-2] == 0:
         return True
     else:
         return False
