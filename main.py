@@ -305,9 +305,9 @@ def write_file(fh: FileHandle, buffer: str) -> None:
                     first_cluster_flag = True
                     first_cluster_index = cluster_index
                     first_cluster_index = round(first_cluster_index / 100) * 100
-                cnt = 0
+                index_inc = 0
                 for i in buffer:
-                    index = cluster_index + cnt
+                    index = cluster_index + index_inc
                     if index > first_cluster_index + CLUSTER_SIZE:
                         retval = file_table_extend_file(byte_array, fh)
                         if retval != DISC_FULL_ERROR and retval != FILE_TABLE_FULL_ERROR:
@@ -316,8 +316,8 @@ def write_file(fh: FileHandle, buffer: str) -> None:
                             # set starting index for the new cluster
                             first_cluster_index = cluster_index
                             # counter reset
-                            cnt = 0
-                            index = cluster_index + cnt
+                            index_inc = 0
+                            index = cluster_index + index_inc
 
                             # increment file size
                             fh.size = fh.size + 1
@@ -329,7 +329,7 @@ def write_file(fh: FileHandle, buffer: str) -> None:
                         write_disc(bytes(byte_array))
                         raise MemoryError(colors.ERROR_RED + "Disc full, unable to write beyond index 3000 for file %s" % fh.name + colors.END)
                     byte_array[index] = ord(i)
-                    cnt += 1
+                    index_inc += 1
                 print_color_wrapper("Buffer data: %s successfully written to file %s" % (buffer[:10], fh.name), colors.INFO_ORANGE)
                 write_disc(bytes(byte_array))
                 break
